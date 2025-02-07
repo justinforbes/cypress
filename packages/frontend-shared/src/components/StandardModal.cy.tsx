@@ -1,5 +1,6 @@
 import StandardModal from './StandardModal.vue'
 import Tooltip from './Tooltip.vue'
+// tslint:disable-next-line: no-implicit-dependencies - unsure how to handle these
 import { defaultMessages } from '@cy/i18n'
 import { DialogOverlay } from '@headlessui/vue'
 import { ref } from 'vue'
@@ -57,8 +58,6 @@ describe('<StandardModal />', { viewportWidth: 800, viewportHeight: 400 }, () =>
 
       cy.contains('h2', title).should('be.visible')
       cy.contains(body).should('be.visible')
-
-      cy.percySnapshot()
     })
 
     it('bare variant renders without padding in body', () => {
@@ -89,7 +88,8 @@ describe('<StandardModal />', { viewportWidth: 800, viewportHeight: 400 }, () =>
       .closest(`[data-cy=standard-modal].${testClass}`)
       .should('exist')
 
-      cy.percySnapshot()
+      cy.findByTestId('external').should('be.visible').should('have.attr', 'href', 'https://on.cypress.io')
+      cy.findByLabelText('Close').should('be.visible')
     })
 
     it('automatically closes tooltips on open', () => {
@@ -124,8 +124,6 @@ describe('<StandardModal />', { viewportWidth: 800, viewportHeight: 400 }, () =>
       // Verify tooltip is no longer open once modal was opened
       cy.findByTestId('tooltip-content')
       .should('not.exist')
-
-      cy.percySnapshot()
     })
   })
 

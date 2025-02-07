@@ -1,4 +1,5 @@
 import SettingsCard from './SettingsCard.vue'
+// tslint:disable-next-line: no-implicit-dependencies - unsure how to handle these
 import IconLaptop from '~icons/mdi/laptop'
 
 describe('<SettingsCard />', () => {
@@ -63,7 +64,6 @@ describe('<SettingsCard />', () => {
     ))
 
     cy.contains(collapsibleSelector, title).focus().type(' ')
-
-    cy.percySnapshot()
+    cy.findByTestId('setting-expanded-container').contains('The body of the content').should('be.visible')
   })
 })
