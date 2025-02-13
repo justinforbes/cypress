@@ -3,11 +3,11 @@ import _ from 'lodash'
 import si from 'systeminformation'
 import os from 'os'
 import fs from 'fs-extra'
-import { performance } from 'perf_hooks'
 import path from 'path'
 import pid from 'pidusage'
 import { groupCyProcesses, Process } from '../../util/process_profiler'
 import browsers from '..'
+import { telemetry } from '@packages/telemetry'
 
 import type { Automation } from '../../automation'
 import type { BrowserInstance } from '../types'
@@ -274,10 +274,15 @@ const checkMemoryPressureAndLog = async ({ automation, test }: { automation: Aut
 const checkMemoryPressure: (automation: Automation) => Promise<void> = measure(async (automation: Automation) => {
   if (collectGarbageOnNextTest) {
     debug('forcing garbage collection')
+    let span
+
     try {
+      span = telemetry.startSpan({ name: 'checkMemoryPressure:collect:garbage' })
       await automation.request('collect:garbage', null, null)
     } catch (err) {
       debug('error collecting garbage: %o', err)
+    } finally {
+      span?.end()
     }
   } else {
     debug('skipping garbage collection')

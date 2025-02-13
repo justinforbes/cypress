@@ -3,17 +3,17 @@ import React from 'react'
 // @ts-ignore
 import Tooltip from '@cypress/react-tooltip'
 
-import MenuExpandRightIcon from '-!react-svg-loader!@packages/frontend-shared/src/assets/icons/menu-expand-right_x16.svg'
+import MenuExpandRightIcon from '@packages/frontend-shared/src/assets/icons/menu-expand-right_x16.svg'
 
 import defaultEvents, { Events } from '../lib/events'
-import { AppState } from '../lib/app-state'
+import type { AppState } from '../lib/app-state'
 import { action } from 'mobx'
 
 import Controls from './controls'
 import Stats from './stats'
-import { StatsStore } from './stats-store'
+import type { StatsStore } from './stats-store'
 import { DebugDismiss } from './DebugDismiss'
-import { RunnablesStore } from '../runnables/runnables-store'
+import type { RunnablesStore } from '../runnables/runnables-store'
 
 export interface ReporterHeaderProps {
   appState: AppState

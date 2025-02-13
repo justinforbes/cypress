@@ -13,6 +13,7 @@
       "noMatchesForFileName": "",
       "byFilenameInput": "Search by filename...",
       "byExtensionInput": "Extensions to include e.g. *.tsx, *.vue",
+      "expandToSearchByExtensions": "Search for files with extensions e.g. *.tsx, *.vue",
       "matchesIndicatorEmptyFileSearch": "No matches | 1 match | { denominator } matches",
       "matchesIndicator": "No matches | {numerator} of {denominator} matches | {numerator} of {denominator} matches"
     },
@@ -218,12 +219,21 @@
         "title": "Record your first run",
         "content": "Record a run to see your test results in Cypress Cloud. You can then optimize your test suite, debug failing and flaky tests, and integrate with your favorite tools."
       },
-      "ct": {
+      "componentTesting": {
         "title": "{0} component testing is available for this project",
         "content": "You can now use Cypress to develop and test individual components without running your whole application. Generate the config in just a few clicks.",
         "primaryAction": "Quick setup",
         "secondaryAction": "Read our guide",
         "dismissAction": "Give feedback"
+      },
+      "enableNotifications": {
+        "title": "Start debugging as soon as your first tests fail",
+        "subtitle": "Cypress can notify you about Cloud test runs for your branch.",
+        "enableDesktopNotifications": "Enable desktop notifications",
+        "remindMeLater": "Remind me later",
+        "notificationsEnabledTitle": "Notifications Enabled",
+        "notificationsEnabledBody": "Nice, notifications are enabled!",
+        "dismissBanner": "Dismiss banner"
       }
     },
     "runSelectedSpecs": "Run {n} spec | Run {n} specs",
@@ -292,12 +302,20 @@
       "erroredWithFailures": "Relevant run had an error with {n} test failure | Relevant run had an error with {n} test failures",
       "passing": "Relevant run is passing",
       "failing": "Relevant run is failing with {n} test failure | Relevant run is failing with {n} test failures"
+    },
+    "runs": {
+      "running": "Latest run is in progress",
+      "failing": "Latest run is failing with {n} test failure | Latest run is failing with {n} test failures",
+      "passed": "Latest run passed",
+      "failed": "Latest run had {n} test failure | Latest run had {n} test failures",
+      "cancelled": "Latest run has been cancelled",
+      "errored": "Latest run had an error",
+      "erroredWithFailures": "Latest run had an error with {n} test failure | Latest run had an error with {n} test failures"
     }
   },
   "topNav": {
     "released": "Released",
     "version": "Version",
-    "versionUnsupported": "Unsupported",
     "installed": "Installed",
     "latest": "Latest",
     "seeAllReleases": "See all releases",
@@ -377,7 +395,7 @@
       "docsButton": {
         "configGuide": {
           "text": "Configuration guide",
-          "link": "https://docs.cypress.io/guides/references/configuration"
+          "link": "https://on.cypress.io/configuration"
         },
         "cloudGuide": {
           "text": "Cypress Cloud guide",
@@ -511,6 +529,23 @@
       "noEditorSelectedPlaceholder": "Choose your editor...",
       "customPathPlaceholder": "/path/to/editor"
     },
+    "notifications": {
+      "title": "Desktop notifications",
+      "description": "Cypress can notify you about Cloud test runs for your branch.",
+      "notifyMeWhenRunStarts": "Notify me when a run starts",
+      "notifyMeWhenRunIsFailing": "Notify me when a run begins to fail",
+      "notifyMeWhenRunCompletes": "Notify me when a run completes",
+      "passed": "Passed",
+      "failed": "Failed",
+      "canceled": "Canceled",
+      "errored": "Errored",
+      "sendTestNotification": "Send a test notification",
+      "notReceivingNotifications": "Not receiving notifications? You might need to allow notifications from Cypress in your computer's system preferences. {0}",
+      "testNotificationTitle": "Hello From Cypress",
+      "testNotificationBody": "This is a test notification",
+      "troubleshoot": "Troubleshoot",
+      "enableNotificationsLabel": "To modify notification settings, enable desktop notifications"
+    },
     "projectId": {
       "title": "Project ID",
       "description": "The Project ID configured for this project inside of Cypress Cloud. {0}"
@@ -544,9 +579,9 @@
     "experiments": {
       "title": "Experiments",
       "description": "If you'd like to try out new features that we're working on, you can enable beta features for your project by turning on the experimental features you'd like to try. {0}",
-      "experimentalFetchPolyfill": {
-        "name": "Fetch polyfill",
-        "description": "Automatically replaces `window.fetch` with a polyfill that Cypress can spy on and stub. Note: `experimentalFetchPolyfill` has been deprecated in Cypress 6.0.0 and will be removed in a future release. Consider using [`cy.intercept()`](https://on.cypress.io/intercept) to intercept `fetch` requests instead."
+      "experimentalCspAllowList": {
+        "name": "CSP Allow List",
+        "description": "Enables Cypress to selectively permit Content-Security-Policy and Content-Security-Policy-Report-Only header directives, including those that might otherwise block Cypress from running."
       },
       "experimentalInteractiveRunEvents": {
         "name": "Interactive run events",
@@ -555,6 +590,16 @@
       "experimentalModifyObstructiveThirdPartyCode": {
         "name": "Modify obstructive third party code",
         "description": "Applies `modifyObstructiveCode` to third party `.html` and `.js`, removes subresource integrity, and modifies the user agent in Electron."
+      },
+      "retries": {
+        "experimentalStrategy": {
+          "name": "Retries Strategy",
+          "description": "Applies a strategy for test retries according to your \"flake tolerance\"; options are `detect-flake-but-always-fail` or `detect-flake-and-pass-on-threshold`."
+        },
+        "experimentalOptions": {
+          "name": "Retries Strategy Options",
+          "description": "Sets retries strategy-specific options like `maxRetries`, `passesRequired`, and `stopIfAnyPassed`."
+        }
       },
       "experimentalSingleTabRunMode": {
         "name": "Single tab run mode",
@@ -583,10 +628,6 @@
       "experimentalMemoryManagement": {
         "name": "Memory Management",
         "description": "Enables support for improved memory management within Chromium-based browsers."
-      },
-      "experimentalSkipDomainInjection": {
-        "name": "Skip Domain Injection",
-        "description": "Disables setting `document.domain` to the application's super domain on injection."
       }
     },
     "device": {
@@ -604,7 +645,7 @@
     "footer": {
       "text": "You can reconfigure the {testingType} testing settings for this project if you're experiencing issues with your Cypress configuration.",
       "button": "Configuration guide",
-      "buttonLink": "https://docs.cypress.io/guides/references/configuration"
+      "buttonLink": "https://on.cypress.io/configuration"
     }
   },
   "runs": {
@@ -726,6 +767,18 @@
         "link": "Support page",
         "button": "Try again"
       }
+    },
+    "card": {
+      "branchName": "Branch Name:",
+      "commitAuthor": "Commit Author:",
+      "totalDuration": "Run Total Duration:",
+      "debugLabel": "Debug",
+      "debugDescription": "View debug for run {runNumber}",
+      "noDebugAvailable": "You can only debug runs for your most recent commits."
+    },
+    "layout": {
+      "viewCloudRuns": "View runs in Cypress Cloud",
+      "checkedOut": "Checked out"
     }
   },
   "debugPage": {
@@ -835,6 +888,7 @@
       "browsers": "{n} browser | {n} browsers"
     },
     "artifacts": {
+      "replay": "View Test Replay",
       "stdout": "View Log",
       "screenshots": "View Screenshots",
       "video": "View Video"
