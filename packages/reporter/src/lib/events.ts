@@ -4,8 +4,8 @@ import appState, { AppState } from './app-state'
 import runnablesStore, { RunnablesStore, LogProps, RootRunnable } from '../runnables/runnables-store'
 import statsStore, { StatsStore } from '../header/stats-store'
 import scroller, { Scroller } from './scroller'
-import { UpdatableTestProps, UpdateTestCallback, TestProps } from '../test/test-model'
-import Err from '../errors/err-model'
+import type { UpdatableTestProps, UpdateTestCallback, TestProps } from '../test/test-model'
+import type Err from '../errors/err-model'
 
 import type { ReporterStartInfo, ReporterRunState } from '@packages/types'
 
@@ -98,7 +98,9 @@ const events: Events = {
     runner.on('test:after:run', action('test:after:run', (runnable: TestProps, isInteractive: boolean) => {
       runnablesStore.runnableFinished(runnable, isInteractive)
       if (runnable.final && !appState.studioActive) {
-        statsStore.incrementCount(runnable.state!)
+        // When displaying the overall test status, we want to reference the test outerStatus
+        // as the last runnable (test attempt) may have passed, but the outerStatus might mark the test run as a failure.
+        statsStore.incrementCount(runnable?._cypressTestStatusInfo?.outerStatus || runnable.state!)
       }
     }))
 

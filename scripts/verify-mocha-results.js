@@ -10,14 +10,19 @@ const fs = require('fs').promises
 const la = require('lazy-ass')
 const path = require('path')
 const { readCircleEnv } = require('./circle-env')
+const { XMLParser } = require('fast-xml-parser')
 
-const RESULT_REGEX = /<testsuites name="([^"]+)" time="([^"]+)" tests="([^"]+)" failures="([^"]+)"(?: skipped="([^"]+)"|)>/
 const REPORTS_PATH = '/tmp/cypress/junit'
 
 const expectedResultCount = Number(process.argv[process.argv.length - 1])
 
 const parseResult = (xml) => {
-  const [name, time, tests, failures, skipped] = RESULT_REGEX.exec(xml).slice(1)
+  const { testsuites } = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: '',
+  }).parse(xml)
+
+  const { name, time, tests, failures, skipped } = testsuites
 
   return {
     name, time, tests: Number(tests), failures: Number(failures), skipped: Number(skipped || 0),
@@ -32,7 +37,7 @@ console.log(`Looking for reports in ${REPORTS_PATH}`)
 // https://circleci.com/blog/keep-environment-variables-private-with-secret-masking/
 function isWhitelistedEnv (key, value) {
   return ['true', 'false', 'TRUE', 'FALSE'].includes(value)
-    || ['nodejs_version', 'CF_DOMAIN'].includes(key)
+    || ['nodejs_version', 'CF_DOMAIN', 'SKIP_RELEASE_CHANGELOG_VALIDATION_FOR_BRANCHES'].includes(key)
     || value.length < 4
 }
 
@@ -94,6 +99,14 @@ async function checkReportFiles (filenames) {
 
 async function verifyMochaResults () {
   try {
+    try {
+      await fs.access(REPORTS_PATH)
+    } catch {
+      console.log('Reports directory does not exist - assuming no tests ran')
+
+      return
+    }
+
     const filenames = await fs.readdir(REPORTS_PATH)
 
     const resultCount = filenames.length

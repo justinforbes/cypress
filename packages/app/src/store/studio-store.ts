@@ -734,7 +734,7 @@ export const useStudioStore = defineStore('studioRecorder', {
       const elementString = stringifyActual($el)
       const assertionString = args[0].replace(/\./g, ' ')
 
-      let message = `expect **${elementString}** to ${assertionString}`
+      let message = `expected **${elementString}** to ${assertionString}`
 
       if (args[1]) {
         message = `${message} **${args[1]}**`
@@ -894,10 +894,6 @@ export const useStudioStore = defineStore('studioRecorder', {
 
     isEmpty: (state): boolean => {
       return state.logs.length === 0
-    },
-
-    isReady (state): boolean {
-      return this.isOpen && this.isEmpty && !state.isLoading && !state.isFailed
     },
 
     hookId: (state) => {
