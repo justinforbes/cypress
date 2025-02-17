@@ -11,7 +11,6 @@ describe('e2e config', () => {
       spec: 'config_passing.cy.js',
       snapshot: true,
       config: {
-        videoCompression: false,
         env: {
           scriptlet: '<script>alert(\'this should not break\')</script>',
         },
@@ -242,6 +241,19 @@ describe('e2e config', () => {
     return systemTests.exec(this, {
       project: 'project-with-(glob)-[chars]',
       snapshot: true,
+    })
+  })
+
+  it('launches browser using config.defaultBrowser', async function () {
+    await Fixtures.scaffoldProject('config-defaultBrowser')
+
+    return systemTests.exec(this, {
+      project: 'config-defaultBrowser',
+      command: 'cypress',
+      args: ['run', '--dev', '--project', path.resolve(process.cwd(), './projects/config-defaultBrowser')],
+      onStdout: (stdout) => {
+        expect(stdout).to.include('Browser:        Chrome')
+      },
     })
   })
 })

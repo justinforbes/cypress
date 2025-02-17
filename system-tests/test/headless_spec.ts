@@ -7,7 +7,6 @@ describe('e2e headless', function () {
     const baseSpec = {
       spec: 'headless.cy.js',
       config: {
-        videoCompression: false,
         env: {
           'CI': process.env.CI,
           'EXPECT_HEADLESS': '1',
@@ -46,12 +45,10 @@ describe('e2e headless', function () {
   systemTests.it('tests in headless mode pass', {
     spec: 'headless.cy.js',
     config: {
-      videoCompression: false,
       env: {
         'CI': process.env.CI,
         'EXPECT_HEADLESS': '1',
       },
-      video: false,
     },
     headed: false,
     snapshot: true,
@@ -69,7 +66,6 @@ describe('e2e headless', function () {
     systemTests.it(`tests in headed mode pass in ${b}`, {
       spec: 'headless.cy.js',
       config: {
-        videoCompression: false,
         env: {
           'CI': process.env.CI,
         },
@@ -81,10 +77,15 @@ describe('e2e headless', function () {
     })
   })
 
-  systemTests.it('launches maximized by default in headless mode (1920x1080)', {
+  systemTests.it('launches maximized by default in headless mode', {
     headed: false,
     project: 'screen-size',
     spec: 'default_size.cy.js',
+    config: {
+      env: {
+        'CI': process.env.CI,
+      },
+    },
   })
 
   systemTests.it('launches at DPR 1x', {

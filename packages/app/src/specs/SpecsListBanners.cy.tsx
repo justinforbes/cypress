@@ -1,3 +1,6 @@
+import { camelCase, assignIn, set } from 'lodash'
+// tslint:disable-next-line: no-implicit-dependencies - unsure how to handle these
+import { defaultMessages } from '@cy/i18n'
 import SpecsListBanners from './SpecsListBanners.vue'
 import { ref } from 'vue'
 import type { Ref } from 'vue'
@@ -5,21 +8,21 @@ import { SpecsListBannersFragment, SpecsListBannersFragmentDoc, UseCohorts_Deter
 import interval from 'human-interval'
 import { CloudUserStubs, CloudProjectStubs } from '@packages/graphql/test/stubCloudTypes'
 import { AllowedState, BannerIds } from '@packages/types'
-import { assignIn, set } from 'lodash'
 import { UserProjectStatusStore, useUserProjectStatusStore } from '@packages/frontend-shared/src/store/user-project-status-store'
 import type { UserProjectStatusState } from '@packages/frontend-shared/src/store/user-project-status-store'
 
 const AlertSelector = 'alert-header'
+const AlertBody = 'alert-body'
 const AlertCloseBtnSelector = 'alert-suffix-icon'
 
 type BannerKey = keyof typeof BannerIds
 type BannerId = typeof BannerIds[BannerKey]
 
 describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1000 }, () => {
-  const validateBaseRender = () => {
+  const validateBaseRender = (title: string, content: string) => {
     it('should render as expected', () => {
-      cy.findByTestId(AlertSelector).should('be.visible')
-      cy.percySnapshot()
+      cy.findByTestId(AlertSelector).should('be.visible').contains(title)
+      cy.findByTestId(AlertBody).should('be.visible').contains(content)
     })
   }
 
@@ -119,19 +122,19 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
         }
 
         const bannerTrueConditions: Record<string, DeepPartial<UserProjectStatusState>> = {
-          'login-banner': {},
-          'create-organization-banner': {
+          'login': {},
+          'create-organization': {
             user: { isLoggedIn: true, isOrganizationLoaded: true },
           },
-          'connect-project-banner': {
+          'connect-project': {
             user: { isLoggedIn: true, isMemberOfOrganization: true },
             project: { isConfigLoaded: true },
           },
-          'record-banner': {
+          'record': {
             user: { isLoggedIn: true, isMemberOfOrganization: true },
             project: { isProjectConnected: true, hasNoRecordedRuns: true, hasNonExampleSpec: true, isConfigLoaded: true },
           },
-          'component-testing-banner': {
+          'component-testing': {
             testingType: 'e2e',
             user: { isLoggedIn: true, isMemberOfOrganization: true },
             project: { isProjectConnected: true, hasNonExampleSpec: true, isConfigLoaded: true, hasDetectedCtFramework: true },
@@ -152,7 +155,20 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
           }
         })
 
-        cy.get(`[data-cy="${bannerTestId}"]`).should('be.visible')
+        cy.get(`[data-cy="${bannerTestId}-banner"]`)
+        .should('be.visible')
+
+        // The ct title has dynamic content and seems complicated to set here, so ignoring
+        let ctBannerTitle = defaultMessages.specPage.banners.componentTesting.title
+
+        if (ctBannerTitle) {
+          defaultMessages.specPage.banners.componentTesting.title = ctBannerTitle.replace('{0}', 'React')
+        }
+
+        cy.wrap(Object.entries(defaultMessages.specPage.banners[camelCase(bannerTestId)])).each((entry) => {
+          // @ts-expect-error
+          cy.contains(entry[1]).should('be.visible')
+        })
       })
 
       it('should be preempted by spec not found banner', () => {
@@ -198,7 +214,11 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       cy.mountFragment(SpecsListBannersFragmentDoc, { render: (gql) => <SpecsListBanners gql={gql} isSpecNotFound={visible} /> })
     })
 
-    validateBaseRender()
+    validateBaseRender(
+      'Spec not found',
+      'It is possible that the file has been moved or deleted. Please choose from the list of specs below.',
+    )
+
     validateCloseControl()
     validateCloseOnPropChange(visible)
     validateReopenOnPropChange(visible)
@@ -216,7 +236,11 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       cy.mountFragment(SpecsListBannersFragmentDoc, { render: (gql) => <SpecsListBanners gql={gql} isOffline={visible} /> })
     })
 
-    validateBaseRender()
+    validateBaseRender(
+      'No internet connection',
+      'Please check your internet connection to resolve this issue. When your internet connection is fixed, we will automatically attempt to fetch the run metrics from Cypress Cloud.',
+    )
+
     validateCloseControl()
     validateCloseOnPropChange(visible)
     validateReopenOnPropChange(visible)
@@ -236,7 +260,11 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       cy.mountFragment(SpecsListBannersFragmentDoc, { render: (gql) => <SpecsListBanners gql={gql} onRefetchFailedCloudData={refetchCallback} isFetchError={visible} /> })
     })
 
-    validateBaseRender()
+    validateBaseRender(
+      'Lost connection',
+      `The request timed out or failed when trying to retrieve the recorded run metrics from Cypress Cloud. The information that you're seeing in the table below may be incomplete as a result.`,
+    )
+
     validateCloseControl()
     validateCloseOnPropChange(visible)
     validateReopenOnPropChange(visible)
@@ -264,7 +292,11 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       cy.mountFragment(SpecsListBannersFragmentDoc, { render: (gql) => <SpecsListBanners gql={gql} isProjectNotFound={visible} /> })
     })
 
-    validateBaseRender()
+    validateBaseRender(
+      `Couldn't find your project`,
+      'We were unable to find an existing project matching the projectId: "test-project-id" set in your Cypress config file. You can reconnect with an existing project or create a new project.',
+    )
+
     validateCloseControl()
     validateCloseOnPropChange(visible)
     validateReopenOnPropChange(visible)
@@ -306,7 +338,11 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       })
     })
 
-    validateBaseRender()
+    validateBaseRender(
+      'Request access to project',
+      'This is a private project that you do not currently have access to. Please request access from the project owner in order to view the list of runs.',
+    )
+
     validateCloseControl()
     validateCloseOnPropChange(visible)
     validateReopenOnPropChange(visible)
@@ -341,7 +377,11 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       })
     })
 
-    validateBaseRender()
+    validateBaseRender(
+      'Request access to project',
+      `The owner of this project has been notified of your request. We'll notify you via email when your access request has been granted.`,
+    )
+
     validateCloseControl()
     validateCloseOnPropChange(visible)
     validateReopenOnPropChange(visible)
@@ -357,7 +397,7 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       } as any,
     }
 
-    validateSmartNotificationBehaviors(BannerIds.ACI_082022_LOGIN, 'login-banner', gql)
+    validateSmartNotificationBehaviors(BannerIds.ACI_082022_LOGIN, 'login', gql)
   })
 
   describe('create organization', () => {
@@ -379,7 +419,7 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       cy.gqlStub.Query.cloudViewer = gql.cloudViewer as any
     })
 
-    validateSmartNotificationBehaviors(BannerIds.ACI_082022_CREATE_ORG, 'create-organization-banner', gql)
+    validateSmartNotificationBehaviors(BannerIds.ACI_082022_CREATE_ORG, 'create-organization', gql)
   })
 
   describe('connect project', () => {
@@ -398,7 +438,7 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       } as any,
     }
 
-    validateSmartNotificationBehaviors(BannerIds.ACI_082022_CONNECT_PROJECT, 'connect-project-banner', gql)
+    validateSmartNotificationBehaviors(BannerIds.ACI_082022_CONNECT_PROJECT, 'connect-project', gql)
   })
 
   describe('record', () => {
@@ -431,7 +471,7 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       cy.gqlStub.Query.cloudViewer = gql.cloudViewer as any
     })
 
-    validateSmartNotificationBehaviors(BannerIds.ACI_082022_RECORD, 'record-banner', gql)
+    validateSmartNotificationBehaviors(BannerIds.ACI_082022_RECORD, 'record', gql)
   })
 
   describe('component testing', () => {
@@ -494,9 +534,13 @@ describe('<SpecsListBanners />', { viewportHeight: 260, defaultCommandTimeout: 1
       })
     })
 
-    validateBaseRender()
+    validateBaseRender(
+      'React component testing is available for this project',
+      'You can now use Cypress to develop and test individual components without running your whole application. Generate the config in just a few clicks.',
+    )
+
     validateCloseControl()
-    validateSmartNotificationBehaviors(BannerIds.CT_052023_AVAILABLE, 'component-testing-banner', gql)
+    validateSmartNotificationBehaviors(BannerIds.CT_052023_AVAILABLE, 'component-testing', gql)
 
     it('should not render when another smart banner has been dismissed within two days', () => {
       userProjectStatusStore.setBannersState({

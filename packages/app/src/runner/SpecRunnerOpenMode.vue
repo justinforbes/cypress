@@ -101,7 +101,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watchEffect } from 'vue'
 import { REPORTER_ID, RUNNER_ID } from './utils'
 import InlineSpecList from '../specs/InlineSpecList.vue'
 import { getAutIframeModel, getEventManager } from '.'
@@ -154,6 +154,14 @@ fragment SpecRunner_Preferences on Query {
 `
 
 gql`
+fragment SpecRunner_Studio on Query {
+  studio {
+    status
+  }
+}
+`
+
+gql`
 fragment SpecRunner_Config on CurrentProject {
   id
   config
@@ -171,6 +179,7 @@ fragment SpecRunner on Query {
   }
   ...ChooseExternalEditor
   ...SpecRunner_Preferences
+  ...SpecRunner_Studio
 }
 `
 
@@ -215,6 +224,10 @@ const isSpecsListOpenPreferences = computed(() => {
   return props.gql.localSettings.preferences.isSpecsListOpen ?? false
 })
 
+const studioStatus = computed(() => {
+  return props.gql.studio?.status
+})
+
 const hideCommandLog = runnerUiStore.hideCommandLog
 
 // watch active spec, and re-run if it changes!
@@ -233,7 +246,7 @@ if (!hideCommandLog) {
   preferences.update('reporterWidth', reporterWidthPreferences.value)
   preferences.update('specListWidth', specsListWidthPreferences.value)
   // 👆 we must update these preferences before calling useRunnerStyle, to make sure that values from GQL
-// will be available during the initial calculation that useRunnerStyle does
+  // will be available during the initial calculation that useRunnerStyle does
 }
 
 const {
@@ -286,6 +299,19 @@ function openFile () {
     },
   })
 }
+
+watchEffect(() => {
+  if (studioStatus.value === 'INITIALIZED') {
+    import('app-studio').then(({ mountTestGenerationPanel }) => {
+      // eslint-disable-next-line no-console
+      console.log('Studio loaded', mountTestGenerationPanel)
+    }).catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error('Error loading Studio', err)
+    })
+  }
+})
+
 onMounted(() => {
   const eventManager = getEventManager()
 
