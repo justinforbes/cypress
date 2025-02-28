@@ -43,12 +43,7 @@ cypress.run({}).then((results) => {
 
 // the caller can determine if Cypress ran or failed to launch
 cypress.run().then(results => {
-  if (results.status === 'failed') {
-    results // $ExpectType CypressFailedRunResult
-  } else {
-    results // $ExpectType CypressRunResult
-    results.status // $ExpectType "finished"
-  }
+  results // $ExpectType CypressRunResult | CypressFailedRunResult
 })
 
 const config = defineConfig({
@@ -105,35 +100,6 @@ const componentConfigVueWebpack: Cypress.ConfigOptions = {
     devServer: {
       bundler: 'webpack',
       framework: 'vue',
-    }
-  }
-}
-
-const componentConfigVueCliWebpack: Cypress.ConfigOptions = {
-  component: {
-    devServer: {
-      bundler: 'webpack',
-      framework: 'vue-cli',
-      webpackConfig: {}
-    }
-  }
-}
-
-const componentConfigNuxtWebpack: Cypress.ConfigOptions = {
-  component: {
-    devServer: {
-      bundler: 'webpack',
-      framework: 'nuxt',
-      webpackConfig: {}
-    }
-  }
-}
-
-const componentConfigCRAWebpack: Cypress.ConfigOptions = {
-  component: {
-    devServer: {
-      bundler: 'webpack',
-      framework: 'create-react-app',
     }
   }
 }

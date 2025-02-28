@@ -13,11 +13,11 @@ export default defineConfig({
       viteConfig: () => {
         return {
           plugins: [
-            react({
-              jsxRuntime: 'classic',
-            }),
+            react(),
             CypressEsm({
-              ignoreList: ['**/*ignoreList.cy.ts', '*MyAsync*'],
+              ignoreModuleList: ['**/ignoreModuleList.cy.ts', '*MyAsync*'],
+              // For `cypress/react` on react 18+, we need to ignore transforming the react-dom/client library
+              ignoreImportList: ['**/ImmutableModuleB*', '**/react-dom/client'],
             }),
           ],
         }

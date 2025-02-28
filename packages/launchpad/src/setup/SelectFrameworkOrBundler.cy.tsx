@@ -6,7 +6,7 @@ const manyOptions: Readonly<Option[]> = [
   {
     name: 'Vue.js',
     id: 'vue',
-    type: 'vue2',
+    type: 'vue',
     isDetected: true,
     supportStatus: 'full',
   },
@@ -47,7 +47,7 @@ describe('<SelectFrameworkOrBundler />', () => {
           {
             name: 'VueJs',
             id: 'vue',
-            type: 'vueclivue3',
+            type: 'vite',
             supportStatus: 'full',
           },
         ]}
@@ -75,7 +75,9 @@ describe('<SelectFrameworkOrBundler />', () => {
       />
     ))
 
-    cy.percySnapshot()
+    cy.contains('button', 'Solid.js').click()
+    cy.findByTestId('external').should('have.attr', 'href', 'https://on.cypress.io/component-integrations?utm_medium=Select+Framework+Dropdown&utm_source=Binary%3A+Launchpad&utm_campaign=Browse+third-party+frameworks').contains('Browse our list of third-party framework integrations')
+    cy.get('[data-testid="icon-check"]').should('be.visible')
   })
 
   it('should select the value', () => {
@@ -111,7 +113,7 @@ describe('<SelectFrameworkOrBundler />', () => {
     cy.mount(() => (
       <div>
         <div>click out</div>
-        <SelectFrameworkOrBundler selectorType="framework" label="Front-end Framework" options={manyOptions} value="vue2" />
+        <SelectFrameworkOrBundler selectorType="framework" label="Front-end Framework" options={manyOptions} value="vue" />
       </div>
     ))
 

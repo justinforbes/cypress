@@ -646,6 +646,9 @@ type CloudRunInstance implements Node {
   """The ID of the group that this instance belongs to"""
   groupId: String!
 
+  """Used to determine if the instance has test replay"""
+  hasReplay: Boolean
+
   """Used to determine if the instance has screenshots"""
   hasScreenshots: Boolean!
 
@@ -655,6 +658,9 @@ type CloudRunInstance implements Node {
   """Used to determine if the instance has screenshots"""
   hasVideo: Boolean!
   id: ID!
+
+  """Link to Cypress Cloud to view test replay, if available"""
+  replayUrl: String
 
   """Link to Cypress Cloud to view stdout, if available"""
   screenshotsUrl: String
@@ -840,6 +846,12 @@ enum CloudTestResultStateEnum {
   SKIPPED
   TIMEDOUT
   UNKNOWN
+}
+
+"""Type of tests"""
+enum CloudTestingTypeEnum {
+  COMPONENT
+  E2E
 }
 
 """A CloudUser represents an User stored in the Cypress Cloud"""
@@ -1103,6 +1115,8 @@ enum ErrorTypeEnum {
   BROWSER_CRASHED
   BROWSER_NOT_FOUND_BY_NAME
   BROWSER_NOT_FOUND_BY_PATH
+  BROWSER_PAGE_CLOSED_UNEXPECTEDLY
+  BROWSER_PROCESS_CLOSED_UNEXPECTEDLY
   BROWSER_UNSUPPORTED_LAUNCH_OPTION
   BUNDLE_ERROR
   CANNOT_CONNECT_BASE_URL
@@ -1115,6 +1129,7 @@ enum ErrorTypeEnum {
   CANNOT_TRASH_ASSETS
   CDP_COULD_NOT_CONNECT
   CDP_COULD_NOT_RECONNECT
+  CDP_FIREFOX_DEPRECATED
   CDP_RETRYING_CONNECTION
   CDP_VERSION_TOO_OLD
   CHROME_WEB_SECURITY_NOT_SUPPORTED
@@ -1123,6 +1138,7 @@ enum ErrorTypeEnum {
   CLOUD_AUTO_CANCEL_MISMATCH
   CLOUD_AUTO_CANCEL_NOT_AVAILABLE_IN_PLAN
   CLOUD_CANCEL_SKIPPED_SPEC
+  CLOUD_CANNOT_CONFIRM_ARTIFACTS
   CLOUD_CANNOT_CREATE_RUN_OR_INSTANCE
   CLOUD_CANNOT_PROCEED_IN_PARALLEL
   CLOUD_CANNOT_PROCEED_IN_SERIAL
@@ -1133,6 +1149,14 @@ enum ErrorTypeEnum {
   CLOUD_PARALLEL_GROUP_PARAMS_MISMATCH
   CLOUD_PARALLEL_REQUIRED
   CLOUD_PROJECT_NOT_FOUND
+  CLOUD_PROTOCOL_CANNOT_UPLOAD_ARTIFACT
+  CLOUD_PROTOCOL_CAPTURE_FAILURE
+  CLOUD_PROTOCOL_INITIALIZATION_FAILURE
+  CLOUD_PROTOCOL_UPLOAD_AGGREGATE_ERROR
+  CLOUD_PROTOCOL_UPLOAD_HTTP_FAILURE
+  CLOUD_PROTOCOL_UPLOAD_NETWORK_FAILURE
+  CLOUD_PROTOCOL_UPLOAD_STREAM_STALL_FAILURE
+  CLOUD_PROTOCOL_UPLOAD_UNKNOWN_ERROR
   CLOUD_RECORD_KEY_NOT_VALID
   CLOUD_RUN_GROUP_NAME_NOT_UNIQUE
   CLOUD_STALE_RUN
@@ -1156,15 +1180,14 @@ enum ErrorTypeEnum {
   CONFIG_FILE_UNEXPECTED_ERROR
   CONFIG_VALIDATION_ERROR
   CONFIG_VALIDATION_MSG_ERROR
-  COULD_NOT_FIND_SYSTEM_NODE
   COULD_NOT_PARSE_ARGUMENTS
   DEFAULT_SUPPORT_FILE_NOT_FOUND
-  DEPRECATED_BEFORE_BROWSER_LAUNCH_ARGS
   DEV_SERVER_CONFIG_FILE_NOT_FOUND
   DUPLICATE_TASK_KEY
   ERROR_READING_FILE
   ERROR_WRITING_FILE
   EXPERIMENTAL_COMPONENT_TESTING_REMOVED
+  EXPERIMENTAL_JIT_COMPILE_REMOVED
   EXPERIMENTAL_NETWORK_STUBBING_REMOVED
   EXPERIMENTAL_ORIGIN_DEPENDENCIES_E2E_ONLY
   EXPERIMENTAL_RUN_ALL_SPECS_E2E_ONLY
@@ -1174,13 +1197,14 @@ enum ErrorTypeEnum {
   EXPERIMENTAL_SESSION_SUPPORT_REMOVED
   EXPERIMENTAL_SHADOW_DOM_REMOVED
   EXPERIMENTAL_SINGLE_TAB_RUN_MODE
+  EXPERIMENTAL_SKIP_DOMAIN_INJECTION_REMOVED
   EXPERIMENTAL_STUDIO_E2E_ONLY
   EXPERIMENTAL_STUDIO_REMOVED
-  EXPERIMENTAL_USE_DEFAULT_DOCUMENT_DOMAIN_E2E_ONLY
   EXTENSION_NOT_LOADED
+  FIREFOX_CDP_FAILED_TO_CONNECT
   FIREFOX_COULD_NOT_CONNECT
   FIREFOX_GC_INTERVAL_REMOVED
-  FIREFOX_MARIONETTE_FAILURE
+  FIREFOX_GECKODRIVER_FAILURE
   FIXTURE_NOT_FOUND
   FOLDER_NOT_WRITABLE
   FREE_PLAN_EXCEEDS_MONTHLY_PRIVATE_TESTS
@@ -1191,19 +1215,20 @@ enum ErrorTypeEnum {
   INCOMPATIBLE_PLUGIN_RETRIES
   INCORRECT_CI_BUILD_ID_USAGE
   INDETERMINATE_CI_BUILD_ID
+  INJECT_DOCUMENT_DOMAIN_DEPRECATION
+  INJECT_DOCUMENT_DOMAIN_E2E_ONLY
   INTEGRATION_FOLDER_REMOVED
   INVALID_CONFIG_OPTION
   INVALID_CYPRESS_INTERNAL_ENV
   INVALID_REPORTER_NAME
   INVOKED_BINARY_OUTSIDE_NPM_MODULE
+  JIT_COMPONENT_TESTING
   LEGACY_CONFIG_ERROR_DURING_MIGRATION
   LEGACY_CONFIG_FILE
   MIGRATION_ALREADY_OCURRED
   MIGRATION_CYPRESS_NOT_FOUND
   MIGRATION_MISMATCHED_CYPRESS_VERSIONS
   MULTIPLE_SUPPORT_FILES_FOUND
-  NODE_VERSION_DEPRECATION_BUNDLED
-  NODE_VERSION_DEPRECATION_SYSTEM
   NOT_LOGGED_IN
   NO_DEFAULT_CONFIG_FILE_FOUND
   NO_PROJECT_FOUND_AT_PROJECT_ROOT
@@ -1218,6 +1243,8 @@ enum ErrorTypeEnum {
   PORT_IN_USE_LONG
   PORT_IN_USE_SHORT
   PROJECT_ID_AND_KEY_BUT_MISSING_RECORD_OPTION
+  PROXY_ENCOUNTERED_INVALID_HEADER_NAME
+  PROXY_ENCOUNTERED_INVALID_HEADER_VALUE
   RECORDING_FROM_FORK_PR
   RECORD_KEY_MISSING
   RECORD_PARAMS_WITHOUT_RECORDING
@@ -1239,6 +1266,7 @@ enum ErrorTypeEnum {
   VIDEO_CAPTURE_FAILED
   VIDEO_COMPRESSION_FAILED
   VIDEO_RECORDING_FAILED
+  VIDEO_UPLOAD_ON_PASSES_REMOVED
 }
 
 """Base error"""
@@ -1410,15 +1438,52 @@ type LocalSettings {
 type LocalSettingsPreferences {
   autoScrollingEnabled: Boolean
   debugSlideshowComplete: Boolean
+  desktopNotificationsEnabled: Boolean
+  dismissNotificationBannerUntil: DateTime
   isSideNavigationOpen: Boolean
   isSpecsListOpen: Boolean
   majorVersionWelcomeDismissed: JSON
+  notifyWhenRunCompletes: JSON
+  notifyWhenRunStarts: Boolean
+  notifyWhenRunStartsFailing: Boolean
   preferredEditorBinary: String
   proxyBypass: String
   proxyServer: String
   reporterWidth: Int
+
+  """
+  Determine if the browser should launch when the browser flag is passed alone
+  """
+  shouldLaunchBrowserFromOpenBrowser: Boolean
   specListWidth: Int
+  studioWidth: Int
   wasBrowserSetInCLI: Boolean
+}
+
+"""Counts for specs and tests from a local project at a point in time"""
+input LocalTestCountsInput {
+  """Current Git branch name for local project"""
+  branch: String
+
+  """Total number of example specs found in project"""
+  exampleSpecs: Int!
+
+  """Total number of tests found in example specs. This can be an estimate"""
+  exampleTests: Int!
+
+  """Project slug for project"""
+  projectSlug: String
+
+  """Testing type"""
+  testingType: CloudTestingTypeEnum!
+
+  """Total number of specs found in project"""
+  totalSpecs: Int!
+
+  """
+  Total number of tests found in all specs in project. This can be an estimate
+  """
+  totalTests: Int!
 }
 
 type ManualMigration implements Node {
@@ -1593,6 +1658,9 @@ type Mutation {
 
   """Request access to an organization from a projectId"""
   cloudProjectRequestAccess(projectSlug: String!): CloudProjectResult
+
+  """Record event"""
+  cloudRecordEvent(localTestCounts: LocalTestCountsInput): Boolean
   completeSetup: Query
 
   """add the passed text to the local clipboard"""
@@ -1704,9 +1772,6 @@ type Mutation {
   """Ping configured Base URL"""
   pingBaseUrl: Query
 
-  """Removes the cache entries for specified cloudSpecByPath query records"""
-  purgeCloudSpecByPathCache(projectSlug: String!, specPaths: [String!]!): Boolean
-
   """show the launchpad windows"""
   reconfigureProject: Boolean!
 
@@ -1754,7 +1819,7 @@ type Mutation {
   """
   runSpec(
     """
-    Relative path of spec to run from Cypress project root - must match e2e or component specPattern
+    Absolute path of the spec to run - must match e2e or component specPattern
     """
     specPath: String!
   ): RunSpecResult
@@ -1787,7 +1852,7 @@ type Mutation {
   setTestsForRun(testsBySpec: [TestsBySpecInput!]!): Boolean
 
   """Set the route to debug and show the specified CloudRun"""
-  showDebugForCloudRun(runNumber: Int!): Query
+  showDebugForCloudRun(runNumber: Int!): Boolean
 
   """Show system notification via Electron"""
   showSystemNotification(body: String!, title: String!): Boolean
@@ -2008,6 +2073,11 @@ type Query {
   """The files that have just been scaffolded"""
   scaffoldedFiles: [ScaffoldedFile!]
 
+  """
+  Data pertaining to studio and the studio manager that is loaded from the cloud
+  """
+  studio: Studio
+
   """Previous versions of cypress and their release date"""
   versions: VersionData
 
@@ -2057,12 +2127,18 @@ type RelevantRun {
   """Information about the current commit for the local project"""
   currentCommitInfo: CommitInfo
 
+  """Latest relevant runs to fetch for the specs and runs page"""
+  latest: [RelevantRunInfo!]!
+
   """Run number of the selected run in use on the Debug page"""
   selectedRunNumber: Int
 }
 
 """runNumber and commitSha for a given run"""
 type RelevantRunInfo {
+  """The run id"""
+  runId: ID!
+
   """The runNumber that these spec counts belong to"""
   runNumber: Int!
 
@@ -2071,11 +2147,16 @@ type RelevantRunInfo {
 
   """Status for run"""
   status: CloudRunStatus
+
+  """The total number of failed specs in the run."""
+  totalFailed: Int!
 }
 
 enum RelevantRunLocationEnum {
   DEBUG
+  RUNS
   SIDEBAR
+  SPECS
 }
 
 """
@@ -2296,6 +2377,18 @@ enum SpecType {
   integration
 }
 
+"""The studio manager for the app"""
+type Studio {
+  """The current status of the studio"""
+  status: StudioStatusType
+}
+
+enum StudioStatusType {
+  INITIALIZED
+  IN_ERROR
+  NOT_INITIALIZED
+}
+
 type Subscription {
   """Triggered when the auth state changes"""
   authChange: Query
@@ -2347,11 +2440,6 @@ type Subscription {
 
   """Issued when the watched specs for the project changes"""
   specsChange: CurrentProject
-
-  """
-  Initiates the polling mechanism with the Cypress Cloud to check if we should refetch specs, and mark specs as stale if we have updates
-  """
-  startPollingForSpecs(branchName: String, projectId: String): String
 }
 
 enum SupportStatusEnum {
@@ -2478,7 +2566,7 @@ type WizardErroredFramework implements Node {
 
 """A frontend framework that we can setup within the app"""
 type WizardFrontendFramework implements Node {
-  """The category (framework, like react-scripts, or library, like react"""
+  """The category (framework, like next.js, or library, like react"""
   category: String!
 
   """Raw SVG icon of framework"""

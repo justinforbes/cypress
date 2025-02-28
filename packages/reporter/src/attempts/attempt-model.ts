@@ -1,16 +1,16 @@
 import _ from 'lodash'
-import { action, computed, observable } from 'mobx'
+import { action, computed, observable, makeObservable } from 'mobx'
 
 import Agent, { AgentProps } from '../agents/agent-model'
 import Command, { CommandProps } from '../commands/command-model'
 import Err from '../errors/err-model'
 import Route, { RouteProps } from '../routes/route-model'
-import Test, { UpdatableTestProps, TestProps } from '../test/test-model'
-import type { TestState } from '@packages/types'
+import type Test from '../test/test-model'
+import type { UpdatableTestProps, TestProps } from '../test/test-model'
+import type { TestState, FileDetails } from '@packages/types'
 import Hook, { HookName } from '../hooks/hook-model'
-import { FileDetails } from '@packages/types'
-import { LogProps } from '../runnables/runnables-store'
-import Log from '../instruments/instrument-model'
+import type { LogProps } from '../runnables/runnables-store'
+import type Log from '../instruments/instrument-model'
 import Session, { SessionProps } from '../sessions/sessions-model'
 
 export default class Attempt {
@@ -23,8 +23,10 @@ export default class Attempt {
   @observable isActive: boolean | null = null
   @observable routes: Route[] = []
   @observable _state?: TestState | null = null
+  @observable _testOuterStatus?: TestState = undefined
   @observable _invocationCount: number = 0
   @observable invocationDetails?: FileDetails
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   @observable hookCount: { [name in HookName]: number } = {
     'before all': 0,
     'before each': 0,
@@ -45,6 +47,7 @@ export default class Attempt {
   _logs: {[key: string]: Log} = {}
 
   constructor (props: TestProps, test: Test) {
+    makeObservable(this)
     this.testId = props.id
     this.id = props.currentRetry || 0
     this.test = test
@@ -107,8 +110,7 @@ export default class Attempt {
   addLog = (props: LogProps) => {
     switch (props.instrument) {
       case 'command': {
-        // @ts-ignore satisfied by CommandProps
-        if (props.sessionInfo) {
+        if ((props as CommandProps).sessionInfo) {
           this._addSession(props as unknown as SessionProps) // add sessionInstrumentPanel details
         }
 
@@ -171,6 +173,10 @@ export default class Attempt {
   @action update (props: UpdatableTestProps) {
     if (props.state) {
       this._state = props.state
+    }
+
+    if (props._cypressTestStatusInfo?.outerStatus) {
+      this._testOuterStatus = props._cypressTestStatusInfo.outerStatus
     }
 
     if (props.err) {

@@ -33,7 +33,7 @@ exports['shows help for open --foo 1'] = `
                                      multiple values with a comma. overrides any
                                      value in cypress.config.{js,ts,mjs,cjs} or
                                      cypress.env.json
-    --global                         force Cypress into global mode as if its
+    --global                         force Cypress into global mode as if it were
                                      globally installed
     -p, --port <port>                runs Cypress on a specific port. overrides
                                      any value in cypress.config.{js,ts,mjs,cjs}.
@@ -86,6 +86,8 @@ exports['shows help for run --foo 1'] = `
     -q, --quiet                                                 run quietly, using only the configured reporter
     --record [bool]                                             records the run. sends test results, screenshots and videos to Cypress Cloud.
     -r, --reporter <reporter>                                   runs a specific mocha reporter. pass a path to use a custom reporter. defaults to "spec"
+    --runner-ui                                                 displays the Cypress Runner UI
+    --no-runner-ui                                              hides the Cypress Runner UI
     -o, --reporter-options <reporter-options>                   options for the mocha reporter. defaults to "null"
     -s, --spec <spec>                                           runs specific spec file(s). defaults to "all"
     -t, --tag <tag>                                             named tag(s) for recorded runs in Cypress Cloud
@@ -221,10 +223,6 @@ exports['cli help command shows help 1'] = `
     version [options]  prints Cypress version
     open [options]     Opens Cypress in the interactive GUI.
     run [options]      Runs Cypress tests from the CLI without the GUI
-    open-ct [options]  Opens Cypress component testing interactive mode.
-                       Deprecated: use "open --component"
-    run-ct [options]   Runs all Cypress component testing suites. Deprecated:
-                       use "run --component"
     install [options]  Installs the Cypress executable matching this package's
                        version
     verify [options]   Verifies that Cypress is installed correctly and
@@ -261,10 +259,6 @@ exports['cli help command shows help for -h 1'] = `
     version [options]  prints Cypress version
     open [options]     Opens Cypress in the interactive GUI.
     run [options]      Runs Cypress tests from the CLI without the GUI
-    open-ct [options]  Opens Cypress component testing interactive mode.
-                       Deprecated: use "open --component"
-    run-ct [options]   Runs all Cypress component testing suites. Deprecated:
-                       use "run --component"
     install [options]  Installs the Cypress executable matching this package's
                        version
     verify [options]   Verifies that Cypress is installed correctly and
@@ -301,10 +295,6 @@ exports['cli help command shows help for --help 1'] = `
     version [options]  prints Cypress version
     open [options]     Opens Cypress in the interactive GUI.
     run [options]      Runs Cypress tests from the CLI without the GUI
-    open-ct [options]  Opens Cypress component testing interactive mode.
-                       Deprecated: use "open --component"
-    run-ct [options]   Runs all Cypress component testing suites. Deprecated:
-                       use "run --component"
     install [options]  Installs the Cypress executable matching this package's
                        version
     verify [options]   Verifies that Cypress is installed correctly and
@@ -342,10 +332,6 @@ exports['cli unknown command shows usage and exits 1'] = `
     version [options]  prints Cypress version
     open [options]     Opens Cypress in the interactive GUI.
     run [options]      Runs Cypress tests from the CLI without the GUI
-    open-ct [options]  Opens Cypress component testing interactive mode.
-                       Deprecated: use "open --component"
-    run-ct [options]   Runs all Cypress component testing suites. Deprecated:
-                       use "run --component"
     install [options]  Installs the Cypress executable matching this package's
                        version
     verify [options]   Verifies that Cypress is installed correctly and
@@ -455,10 +441,6 @@ exports['cli CYPRESS_INTERNAL_ENV allows and warns when staging environment 1'] 
     version [options]  prints Cypress version
     open [options]     Opens Cypress in the interactive GUI.
     run [options]      Runs Cypress tests from the CLI without the GUI
-    open-ct [options]  Opens Cypress component testing interactive mode.
-                       Deprecated: use "open --component"
-    run-ct [options]   Runs all Cypress component testing suites. Deprecated:
-                       use "run --component"
     install [options]  Installs the Cypress executable matching this package's
                        version
     verify [options]   Verifies that Cypress is installed correctly and

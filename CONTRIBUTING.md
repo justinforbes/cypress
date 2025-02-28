@@ -13,7 +13,6 @@ Thanks for taking the time to contribute! :smile:
 
 - [Report bugs](https://github.com/cypress-io/cypress/issues/new) by opening an issue.
 - [Request features](https://github.com/cypress-io/cypress/issues/new) by opening an issue.
-- [Help triage existing issues](#triaging-issues).
 - Write code to address an issue. We have some issues labeled as [`good first issue`](https://github.com/cypress-io/cypress/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) that are a good place to start. Please thoroughly read our [Writing Code guide](#writing-code).
 
 ## Table of Contents
@@ -26,7 +25,7 @@ Thanks for taking the time to contribute! :smile:
   - [Requirements](#requirements)
   - [Getting Started](#getting-started)
   - [Coding Style](#coding-style)
-  - [Adding links within code](#Adding-links-within-code)
+  - [Adding links within code](#adding-links-within-code)
   - [Tests](#tests)
   - [Packages](#packages)
 - [Committing Code](#committing-code)
@@ -34,11 +33,11 @@ Thanks for taking the time to contribute! :smile:
   - [Pull Requests](#pull-requests)
   - [Dependencies](#dependencies)
 - [Reviewing Code](#reviewing-code)
-  - [Some rules about Code Review](#Some-rules-about-Code-Review)
-  - [Steps to take during Code Review](#Steps-to-take-during-Code-Review)
-  - [Code Review Checklist](#Code-Review-Checklist)
-  - [Code Review of Dependency Updates](#Code-Review-of-Dependency-Updates)
-- [Deployment](#deployment)
+  - [Some rules about Code Review](#some-rules-about-code-review)
+  - [Steps to take during Code Review](#steps-to-take-during-code-review)
+  - [Code Review Checklist](#code-review-checklist)
+  - [Code Review of Dependency Updates](#code-review-of-dependency-updates)
+- [Releases](#releases)
 
 ## Code of Conduct
 
@@ -163,7 +162,7 @@ Here is a list of the core packages in this repository with a short description,
  | [socket](./packages/socket)           | `@packages/socket`      | A wrapper around socket.io to provide common libraries.                      |
  | [ts](./packages/ts)                   | `@packages/ts`          | A centralized version of typescript.                                         |
  | [types](./packages/types)             | `@packages/types`          | The shared internal Cypress types.                                         |
- | [v8-snapshot-require](./packages/v8-snapshot-require) | `@packages/v8-snapshot-requie` | Tool to load a snapshot for Electron applications that was created by `@tooling/v8-snapshot`. |
+ | [v8-snapshot-require](./packages/v8-snapshot-require) | `@packages/v8-snapshot-require` | Tool to load a snapshot for Electron applications that was created by `@tooling/v8-snapshot`. |
  | [web-config](./packages/web-config)             | `@packages/web-config`          | The web-related configuration.                                         |
 
 Private packages involved in development of the app live within the [`tooling`](./tooling) directory and are in the `@tooling/` namespace. They are discrete modules with different responsibilities, but each is necessary for development of the Cypress app and is not necessarily useful outside of the Cypress app.
@@ -172,7 +171,7 @@ Here is a list of the packages in this repository with a short description, loca
 
  | Folder Name                           | Package Name            | Purpose                                                                      |
  | :------------------------------------ | :---------------------- | :--------------------------------------------------------------------------- |
- | [electron-mksnapshot](./electron-mksnapshot) | `electron-mksnapshot` | A rewrite of [electron/mksnapshot](https://github.com/electron/mksnapshot) to support multiple versions. |
+ | [electron-mksnapshot](./tooling/electron-mksnapshot) | `electron-mksnapshot` | A rewrite of [electron/mksnapshot](https://github.com/electron/mksnapshot) to support multiple versions. |
  | [packherd](./tooling/packherd)        | `packherd`              | Herds all dependencies reachable from an entry and packs them.               |
  | [v8-snapshot](./tooling/v8-snapshot)  | `v8-snapshot`           | Tool to create a snapshot for Electron applications.                         |
 
@@ -183,17 +182,14 @@ Here is a list of the npm packages in this repository:
  | Folder Name                                            | Package Name                       | Purpose                                                                      |
  | :----------------------------------------------------- | :--------------------------------- | :--------------------------------------------------------------------------- |
  | [angular](./npm/angular)                               | `@cypress/angular`                   | Cypress component testing for Angular.     |
- | [create-cypress-tests](./npm/create-cypress-tests)     | `@cypress/create-cypress-tests`    | Tooling to scaffold Cypress configuration and demo test files. |
  | [eslint-plugin-dev](./npm/eslint-plugin-dev)           | `@cypress/eslint-plugin-dev`       | Eslint plugin for internal development.          |
  | [grep](./npm/grep)                                       | `@cypress/grep`                     | Filter tests using substring                        |
  | [mount-utils](./npm/mount-utils)                       | `@cypress/mount-utils`             | Common functionality for Vue/React/Angular adapters. |
  | [react](./npm/react)                                   | `@cypress/react`                   | Cypress component testing for React.             |
- | [react18](./npm/react18)                               | `@cypress/react18`                   | Cypress component testing for React 18.           |
  | [schematic](./npm/cypress-schematic)                   | `@cypress/schematic`            | Official Angular Schematic and Builder for the Angular CLI.|
  | [svelte](./npm/svelte)                               | `@cypress/svelte`                   | Cypress component testing for Svelte.           |
  | [vite-dev-server](./npm/vite-dev-server)     | `@cypress/vite-dev-server`    | Vite powered dev server for Component Testing.                  |
  | [vue](./npm/vue)                                       | `@cypress/vue`                     | Cypress component testing for Vue 3.               |
- | [vue2](./npm/vue2)                                       | `@cypress/vue2`                     | Cypress component testing for Vue 2.               |
  | [webpack-batteries-included-preprocessor](./npm/webpack-batteries-included-preprocessor)     | `@cypress/webpack-batteries-included-preprocessor`    | Cypress preprocessor for bundling JavaScript via webpack with dependencies included and support for various ES features, TypeScript, and CoffeeScript.  |
  | [webpack-dev-server](./npm/webpack-dev-server)     | `@cypress/webpack-dev-server`    | Webpack powered dev server for Component Testing.                |
  | [webpack-preprocessor](./npm/webpack-preprocessor)     | `@cypress/webpack-preprocessor`    | Cypress preprocessor for bundling JavaScript via webpack.  |
@@ -205,8 +201,20 @@ We try to tag all issues with a `pkg/` or `npm/` tag describing the appropriate 
 You must have the following installed on your system to contribute locally:
 
 - [`Node.js`](https://nodejs.org/en/) (See the root [.node-version](.node-version) file for the required version. You can find a list of tools on [node-version-usage](https://github.com/shadowspawn/node-version-usage) to switch the version of [`Node.js`](https://nodejs.org/en/) based on [.node-version](.node-version).)
-- [`yarn`](https://yarnpkg.com/en/docs/install)
+- [`Yarn v1 Classic`](https://yarnpkg.com/en/docs/install). If you have [`Node.js`](https://nodejs.org/en/) experimental [corepack](https://nodejs.org/docs/latest/api/corepack.html) enabled, installation of the Yarn package manager will be handled automatically. Attempting to install Yarn globally with npm will fail if [corepack](https://nodejs.org/docs/latest/api/corepack.html) is enabled.
 - [`python`](https://www.python.org/downloads/) (since we use `node-gyp`. See their [repo](https://github.com/nodejs/node-gyp) for Python version requirements.)
+
+#### Debian/Ubuntu
+
+`sudo apt install g++ make` meets the additional requirements to run `node-gyp` in the context of building Cypress from source.
+`python` is pre-installed on Debian-based systems including Ubuntu.
+The Python versions shipped with Ubuntu versions `20.04`, `22.04` and `24.*` are compatible with Cypress requirements.
+
+For Ubuntu `24.04` and above, refer also to the [Ubuntu 24.04 Release notes](https://discourse.ubuntu.com/t/noble-numbat-release-notes/39890) in the section "Unprivileged user namespace restrictions" and apply one of the workarounds to disable unprivileged user namespace restrictions for the entire system, either for one boot or persistently, as described. If you do not do this you may receive an error which includes the text `FATAL:setuid_sandbox_host.cc` when you try to run Cypress on these versions of Ubuntu after building Cypress from source.
+
+#### Windows
+
+Currently no additional instructions for installation requirements.
 
 ### Getting Started
 
@@ -237,11 +245,13 @@ If there are errors building the packages, prefix the commands with `DEBUG=cypre
 
 When running `yarn start` this routes through the CLI and eventually calls `yarn dev` with the proper arguments. This enables Cypress day-to-day development to match the logic of the built binary + CLI integration.
 
-If you want to bypass the CLI entirely, you can use the `yarn dev` task and pass arguments directly. For example, to headlessly run a project in a given folder, while trying to record to Cypress Cloud.
+CLI flags can be passed to `yarn` targets to control application behavior when running locally. For example, to headlessly run a project in a given folder, while trying to record to Cypress Cloud:
 
 ```text
-yarn dev --run-project /project/folder --record --key <key>
+yarn cypress:run --project /project/folder --record --key <key>
 ```
+
+Alternatively, you can run `yarn dev` at the root of this repository to bypass the CLI. This will launch "global" mode, where you can then select a project.
 
 #### Adding new Dependencies
 
@@ -332,7 +342,7 @@ Many Cypress packages print out debugging information to console via the `debug`
 ### Coding Style
 
 We use [eslint](https://eslint.org/) to lint all JavaScript code and follow rules specified in
-[@cypress/eslint-plugin-dev](./npm/eslint-plugin-cypress) plugin.
+[@cypress/eslint-plugin-dev](./npm/eslint-plugin-dev) plugin.
 
 This project uses a Git pre-commit hook to lint staged files before committing. See the [`lint-staged` project](https://github.com/okonet/lint-staged) for details.
 `lint-staged` will try to auto-fix any lint errors with `eslint --fix`, so if it fails, you must manually fix the lint errors before committing.
@@ -361,6 +371,8 @@ Additionally, we test the code by running it against various other example proje
 
 If you're curious how we manage all of these tests in CI check out our [CircleCI config](.circleci/config.yml).
 
+Some of our test jobs in CircleCI require access to environment variables that are sensitive and are restricted to Cypress maintainers only. If you are not a Cypress maintainer, when your CI job runs, only a subset of jobs will run at first. A Cypress maintainer will need to approve the `contributor-pr` job in your workflow in order for your CI pipeline to complete.
+
 #### Docker
 
 Sometimes tests pass locally, but fail in CI. Our CI environment is dockerized. In order to run the image used in CI locally:
@@ -376,23 +388,19 @@ There is a script [scripts/run-docker-local.sh](scripts/run-docker-local.sh) tha
 
 The image will start and will map the root of the repository to `/cypress` inside the image. Now you can modify the files using your favorite environment and rerun tests inside the docker environment.
 
-#### Docker for built binary
+#### Docker as a performance constrained environment
 
-You can also use Docker to simulate and debug the built binary. In a temporary folder (for example from the folder `/tmp/test-folder/`) start a Docker image:
+Sometimes performance issues are easier to reproduce in performance constrained environments. A docker container can be a good way to simulate this locally and allow for quick iteration.
 
-```shell
-$ docker run -it -w /app -v $PWD:/app cypress/base:8 /bin/bash
-```
-
-Point the installation at a specific beta binary and NPM package archive (if needed) and _set local cache folder_ to unzip the downloaded binary into a subfolder.
+In a fresh cypress repository run the following command:
 
 ```shell
-$ export CYPRESS_INSTALL_BINARY=https://cdn.cypress.io/beta/.../cypress.zip
-$ export CYPRESS_CACHE_FOLDER=./cypress-cache
-$ yarn add https://cdn.cypress.io/beta/npm/.../cypress.tgz
+docker compose run --service-port dev
 ```
 
-Note that unzipping the Linux binary inside a Docker container onto a mapped volume drive is *slow*. But once this is done you can modify the application resource folder in the local folder `/tmp/test-folder/node_modules/cypress/cypress-cache/3.3.0/Cypress/resources/app` to debug issues.
+This will spin up a docker container based off cypress/browsers:latest and start up the bash terminal. From here you can yarn install and develop as normal, although slower. It's recommend that you run this in a fresh repo because node modules may differ between an install on your local device and from within a linux docker image.
+
+Ports 5566 and 5567 are available to attach debuggers to, please note that docker compose run only maps ports if the `--service-port` command is used.
 
 ### Packages
 
@@ -412,7 +420,7 @@ The repository has one protected branch:
 
 We want to publish our [standalone npm packages](./npm) continuously as new features are added. Therefore, after any pull request that changes independent `@cypress/` packages in the [`npm`](./npm) directory will automatically publish when a PR is merged directly into `develop` and the entire build passes. We used [`semantic-release`](https://semantic-release.gitbook.io/semantic-release/) to automate the release of these packages to npm.
 
-We do not continuously deploy the Cypress binary, so `develop` contains all of the new features and fixes that are staged to go out in the next update of the main Cypress app. If you make changes to an npm package that can't be published until the binary is also updated, you should make a pull request against specifying this is not be merged until the scheduled  Cypress app release date.
+We do not continuously deploy the Cypress binary, so `develop` contains all of the new features and fixes that are staged to go out in the next update of the main Cypress app. If you make changes to an npm package that can't be published until the binary is also updated, the pull request should clearly state that it should not be merged until the next scheduled Cypress app release date.
 
 ### Pull Requests
 
@@ -421,14 +429,14 @@ We do not continuously deploy the Cypress binary, so `develop` contains all of t
 - PRs can be opened before all the work is finished. In fact we encourage this! Please create a [Draft Pull Request](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests#draft-pull-requests) if your PR is not ready for review. [Mark the PR as **Ready for Review**](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review) when you're ready for a Cypress team member to review the PR.
 - Prefix the title of the Pull Request using [semantic-release](https://github.com/semantic-release/semantic-release)'s format using one of the following definitions. Once committed to develop, this prefix will determine the appropriate 'next version' of Cypress or the corresponding npm module.
   - Changes has user-facing impact:
-    - `breaking` - A breaking change that will require a MVB
-    - `dependency` - A change to a dependency that impact the user
-    - `deprecation` - A API deprecation notice for users
+    - `breaking` - A breaking change that will require an MVB
+    - `dependency` - A change to a dependency that impacts the user
+    - `deprecation` - An API deprecation notice for users
     - `feat` - A new feature
-    - `fix` - A bug fix or regression fix.
-    - `misc` - a misc user-facing change, like a UI update which is not a fix or enhancement to how Cypress works
+    - `fix` - A bug fix or regression fix
+    - `misc` - A miscellaneous user-facing change, like a UI update which is not a fix or enhancement to how Cypress works
     - `perf` - A code change that improves performance
-  - Changes that improves the codebase or system but has no user-facing impact:
+  - Change that improves the codebase or system but has no user-facing impact:
     - `chore` - Changes to the build process or auxiliary tools and libraries such as documentation generation
     - `docs` -  Documentation only changes
     - `refactor` - A code change that neither fixes a bug nor adds a feature
@@ -438,6 +446,11 @@ We do not continuously deploy the Cypress binary, so `develop` contains all of t
 - Fill out the [Pull Request Template](./.github/PULL_REQUEST_TEMPLATE.md) completely within the body of the PR. If you feel some areas are not relevant add `N/A` as opposed to deleting those sections. PRs will not be reviewed if this template is not filled in.
 - Please check the "Allow edits from maintainers" checkbox when submitting your PR. This will make it easier for the maintainers to make minor adjustments, to help with tests or any other changes we may need.
 ![Allow edits from maintainers checkbox](https://user-images.githubusercontent.com/1271181/31393427-b3105d44-ada9-11e7-80f2-0dac51e3919e.png)
+- After you have submitted a PR you may see that GitHub shows a status message "This branch has conflicts that must be resolved" or "This branch is out-of-date with the base branch".
+- It is the submitter's responsibility to resolve any conflicts by rebasing on the base branch (usually `develop`).
+- In the case of an out-of-date branch, the submitter may use the GitHub PR "Update branch" button which merges the base branch into the submitter's branch and starts a new CircleCI test run.
+  External contributors should use this option sparingly if the PR has been approved and is close to merging. The Cypress.io team will generally make sure that the PR is updated before merging.
+  Each push from an external contributor requires a manual CI workflow approval from the Cypress.io team and multiple updates over a short period of time may slow down the approval and merge process.
 - All Pull Requests require a minimum of **two** approvals.
 - After the PR is approved, the original contributor can merge the PR (if the original contributor has access).
 - When you merge a PR into `develop`, select [**Squash and merge**](https://docs.github.com/en/github/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges#squash-and-merge-your-pull-request-commits). This will squash all commits into a single commit.

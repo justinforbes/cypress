@@ -52,10 +52,10 @@ export interface ProjectApiShape {
     emitter: EventEmitter
   }
   isListening: (url: string) => Promise<void>
-  resetBrowserTabsForNextTest(shouldKeepTabOpen: boolean): Promise<void>
+  resetBrowserTabsForNextSpec(shouldKeepTabOpen: boolean): Promise<void>
   resetServer(): void
   runSpec(spec: Cypress.Spec): Promise<void>
-  routeToDebug(): void
+  routeToDebug(runNumber: number): void
 }
 
 export interface FindSpecs<T> {
@@ -89,6 +89,13 @@ type SetForceReconfigureProjectByTestingType = {
 const debug = debugLib('cypress:data-context:ProjectActions')
 
 export class ProjectActions {
+  /**
+   * @var globalLaunchCount
+   * Used as a read-only in the launchpad to ensure
+   * that launchProject is only called once if
+   * the --browser flag is passed alone.
+   */
+  private globalLaunchCount = 0
   constructor (private ctx: DataContext) {}
 
   private get api () {
@@ -96,6 +103,7 @@ export class ProjectActions {
   }
 
   async clearCurrentProject () {
+    // Clear data associated with local project
     this.ctx.update((d) => {
       d.activeBrowser = null
       d.currentProject = null
@@ -108,7 +116,11 @@ export class ProjectActions {
       d.forceReconfigureProject = null
       d.scaffoldedFiles = null
       d.app.browserStatus = 'closed'
+      d.app.browserUserAgent = null
     })
+
+    // Also clear any data associated with the linked cloud project
+    this.ctx.actions.cloudProject.clearCloudProject()
 
     this.ctx.actions.migration.reset()
     await this.ctx.lifecycleManager.clearCurrentProject()
@@ -116,12 +128,18 @@ export class ProjectActions {
     await this.api.closeActiveProject()
   }
 
-  private get projects () {
-    return this.ctx.projectsList
+  private set projects (projects: ProjectShape[]) {
+    this.ctx.update((d) => {
+      d.app.projects = projects
+    })
   }
 
-  private set projects (projects: ProjectShape[]) {
-    this.ctx.coreData.app.projects = projects
+  get launchCount () {
+    return this.globalLaunchCount
+  }
+
+  set launchCount (count) {
+    this.globalLaunchCount = count
   }
 
   openDirectoryInIDE (projectPath: string) {
@@ -165,11 +183,7 @@ export class ProjectActions {
   async loadProjects () {
     const projectRoots = await this.api.getProjectRootsFromCache()
 
-    this.ctx.update((d) => {
-      d.app.projects = [...projectRoots]
-    })
-
-    return this.projects
+    return this.projects = [...projectRoots]
   }
 
   async initializeActiveProject (options: OpenProjectLaunchOptions = {}) {
@@ -280,11 +294,12 @@ export class ProjectActions {
 
     // Used for run-all-specs feature
     if (options?.shouldLaunchNewTab) {
-      await this.api.resetBrowserTabsForNextTest(true)
+      await this.api.resetBrowserTabsForNextSpec(true)
       this.api.resetServer()
     }
 
     await this.api.launchProject(browser, activeSpec ?? emptySpec, options)
+    this.globalLaunchCount++
 
     return
   }
@@ -450,7 +465,7 @@ export class ProjectActions {
       return
     }
 
-    const baseUrlWarning = this.ctx.warnings.find((e) => e.cypressError.type === 'CANNOT_CONNECT_BASE_URL_WARNING')
+    const baseUrlWarning = this.ctx.coreData.diagnostics.warnings.find((e) => e.cypressError.type === 'CANNOT_CONNECT_BASE_URL_WARNING')
 
     if (baseUrlWarning) {
       this.ctx.actions.error.clearWarning(baseUrlWarning.id)
@@ -512,11 +527,14 @@ export class ProjectActions {
 
       let targetTestingType: TestingType
 
+      // Get relative path from the specPath to determine which testing type from the specPattern
+      const relativeSpecPath = path.relative(this.ctx.currentProject, specPath)
+
       // Check to see whether input specPath matches the specPattern for one or the other testing type
       // If it matches neither then we can't run the spec and we should error
-      if (await this.ctx.project.matchesSpecPattern(specPath, 'e2e')) {
+      if (await this.ctx.project.matchesSpecPattern(relativeSpecPath, 'e2e')) {
         targetTestingType = 'e2e'
-      } else if (await this.ctx.project.matchesSpecPattern(specPath, 'component')) {
+      } else if (await this.ctx.project.matchesSpecPattern(relativeSpecPath, 'component')) {
         targetTestingType = 'component'
       } else {
         throw new RunSpecError('NO_SPEC_PATTERN_MATCH', 'Unable to determine testing type, spec does not match any configured specPattern')
@@ -524,14 +542,12 @@ export class ProjectActions {
 
       debug(`Spec %s matches '${targetTestingType}' pattern`, specPath)
 
-      const absoluteSpecPath = this.ctx.path.resolve(this.ctx.currentProject, specPath)
-
-      debug('Attempting to launch spec %s', absoluteSpecPath)
+      debug('Attempting to launch spec %s', specPath)
 
       // Look to see if there's actually a file at the target location
       // This helps us avoid switching testingType *then* finding out the spec doesn't exist
-      if (!this.ctx.fs.existsSync(absoluteSpecPath)) {
-        throw new RunSpecError('SPEC_NOT_FOUND', `No file exists at path ${absoluteSpecPath}`)
+      if (!this.ctx.fs.existsSync(specPath)) {
+        throw new RunSpecError('SPEC_NOT_FOUND', `No file exists at path ${specPath}`)
       }
 
       // We now know what testingType we need to be in - if we're already there, great
@@ -609,11 +625,11 @@ export class ProjectActions {
       // a matching file exists above it may not end up loading as a valid spec so we validate that here
       //
       // Have to use toPosix here to align windows absolute paths with how the absolute path is storied in the data context
-      const spec = this.ctx.project.getCurrentSpecByAbsolute(toPosix(absoluteSpecPath))
+      const spec = this.ctx.project.getCurrentSpecByAbsolute(toPosix(specPath))
 
       if (!spec) {
-        debug(`Spec not found with path: ${absoluteSpecPath}`)
-        throw new RunSpecError('SPEC_NOT_FOUND', `Unable to find matching spec with path ${absoluteSpecPath}`)
+        debug(`Spec not found with path: ${specPath}`)
+        throw new RunSpecError('SPEC_NOT_FOUND', `Unable to find matching spec with path ${specPath}`)
       }
 
       const browser = this.ctx.coreData.activeBrowser!
@@ -640,7 +656,9 @@ export class ProjectActions {
   }
 
   async debugCloudRun (runNumber: number) {
+    debug('attempting to switch to run #%s', runNumber)
     await this.ctx.relevantRuns.moveToRun(runNumber, this.ctx.git?.currentHashes || [])
-    this.api.routeToDebug()
+    debug('navigating to Debug page')
+    this.api.routeToDebug(runNumber)
   }
 }

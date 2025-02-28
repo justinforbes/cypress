@@ -7,7 +7,6 @@
   "browser": "src/browser.ts",
   "scripts": {
     "build": "tsc",
-    "build-prod": "yarn build",
     "check-ts": "tsc --noEmit && yarn -s tslint",
     "clean": "rimraf dist",
     "test": "yarn test-unit",
@@ -34,5 +33,6 @@
     "dist",
     "src"
   ],
-  "types": "src/node.ts"
+  "types": "src/node.ts",
+  "nx": {}
 }

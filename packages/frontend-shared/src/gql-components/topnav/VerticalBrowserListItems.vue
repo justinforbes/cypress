@@ -11,20 +11,19 @@
         'cursor-pointer': !browser.disabled && browser.isVersionSupported
       }"
       data-cy="top-nav-browser-list-item"
-
       :data-browser-id="browser.id"
       @click="handleBrowserChoice(browser)"
     >
-      <img
-        class="mr-[16px] min-w-[26px] w-[26px]"
+      <component
+        :is="allBrowsersIcons[browser.displayName?.toLowerCase()] || allBrowsersIcons.generic"
+        class="mr-[16px] min-w-[26px] w-[26px] min-h-[45px]"
         :class="{ 'filter grayscale': browser.disabled || !browser.isVersionSupported }"
-        :src="allBrowsersIcons[browser.displayName] || allBrowsersIcons.generic"
         alt=""
-      >
+      />
       <div class="grow">
         <div>
           <button
-            class="font-medium box-border focus:outline-none"
+            class="box-border font-medium focus:outline-none"
             :class="{
               'text-indigo-500 group-hover:text-indigo-700': !browser.isSelected && !browser.disabled && browser.isVersionSupported,
               'text-jade-700': browser.isSelected,
@@ -39,19 +38,15 @@
             "
           >
             {{ t('topNav.version') }} {{ browser.majorVersion }}
-            <span v-if="browser.version === 'unsupported'">
-              ({{ t('topNav.versionUnsupported') }})
+            <span v-if="!browser.isVersionSupported">
+              (Unsupported)
             </span>
           </div>
         </div>
       </div>
       <div>
-        <div
-          class="flex h-full items-center align-middle"
-        >
-          <template
-            v-if="browser.isSelected"
-          >
+        <div class="flex items-center h-full align-middle">
+          <template v-if="browser.isSelected">
             <div data-cy="top-nav-browser-list-selected-item">
               <i-cy-circle-check_x24 class="h-[24px] w-[24px] icon-dark-jade-100 icon-light-jade-500" />
             </div>
@@ -65,7 +60,7 @@
                 />
                 <template #popper>
                   <div class="text-center p-2 text-gray-300 text-[14px] leading-[20px]">
-                    <div class="font-medium text-white mb-2">
+                    <div class="mb-2 font-medium text-white">
                       Unsupported browser
                     </div>
                     {{ browser.warning }}
@@ -87,7 +82,6 @@ import { computed } from 'vue'
 import { gql, useMutation } from '@urql/vue'
 import { allBrowsersIcons } from '@packages/frontend-shared/src/assets/browserLogos'
 import Tooltip from '../../components/Tooltip.vue'
-import sortBrowsers from '@packages/frontend-shared/src/utils/sortBrowsers'
 
 const { t } = useI18n()
 
@@ -129,11 +123,7 @@ const props = withDefaults(defineProps <{
 })
 
 const browsers = computed(() => {
-  if (!props.gql.browsers) {
-    return undefined
-  }
-
-  return sortBrowsers([...props.gql.browsers])
+  return (props.gql.browsers ?? []).slice().sort((a, b) => a.displayName > b.displayName ? 1 : -1)
 })
 
 const setBrowser = useMutation(VerticalBrowserListItems_SetBrowserDocument)

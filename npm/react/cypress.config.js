@@ -1,12 +1,10 @@
 module.exports = {
   'viewportWidth': 400,
   'viewportHeight': 400,
-  'video': false,
   'projectId': 'z9dxah',
   'env': {
     'reactDevtools': true,
   },
-  'experimentalFetchPolyfill': true,
   'component': {
     experimentalSingleTabRunMode: true,
     'excludeSpecPattern': [

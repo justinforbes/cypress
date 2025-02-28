@@ -4,6 +4,7 @@ import { generalDecrypt, GeneralJWE } from 'jose'
 import base64Url from 'base64url'
 import type { CypressRequestOptions } from './api'
 import { deflateRaw as deflateRawCb } from 'zlib'
+import fs from 'fs'
 
 const deflateRaw = promisify(deflateRawCb)
 
@@ -34,6 +35,33 @@ function getPublicKey () {
 export interface EncryptRequestData {
   jwe: GeneralJWE
   secretKey: crypto.KeyObject
+}
+
+export function verifySignature (body: string, signature: string, publicKey?: crypto.KeyObject) {
+  const verify = crypto.createVerify('SHA256')
+
+  verify.update(body)
+
+  return verify.verify(publicKey || getPublicKey(), signature, 'base64')
+}
+
+export function verifySignatureFromFile (file: string, signature: string, publicKey?: crypto.KeyObject): Promise<boolean> {
+  const verify = crypto.createVerify('SHA256')
+
+  const stream = fs.createReadStream(file)
+
+  stream.on('data', (chunk: crypto.BinaryLike) => {
+    verify.update(chunk)
+  })
+
+  return new Promise<boolean>((resolve, reject) => {
+    stream.on('end', () => {
+      verify.end()
+      resolve(verify.verify(publicKey || getPublicKey(), signature, 'base64'))
+    })
+
+    stream.on('error', reject)
+  })
 }
 
 // Implements the https://www.rfc-editor.org/rfc/rfc7516 spec
@@ -78,7 +106,7 @@ export async function encryptRequest (params: CypressRequestOptions, publicKey?:
 
 /**
  * Given the returned JWE and the symmetric symmetric key used in the original request,
- * decrypts the repsonse payload, which is assumed to be JSON
+ * decrypts the response payload, which is assumed to be JSON
  */
 export async function decryptResponse (jwe: GeneralJWE, encryptionKey: crypto.KeyObject): Promise<any> {
   const result = await generalDecrypt(jwe, encryptionKey)

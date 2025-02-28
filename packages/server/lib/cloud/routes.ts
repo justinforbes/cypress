@@ -13,6 +13,10 @@ const CLOUD_ENDPOINTS = {
   instanceTests: 'instances/:id/tests',
   instanceResults: 'instances/:id/results',
   instanceStdout: 'instances/:id/stdout',
+  instanceArtifacts: 'instances/:id/artifacts',
+  captureProtocolErrors: 'capture-protocol/errors',
+  studio: 'studio/bundle/current.tgz',
+  studioErrors: 'studio/errors',
   exceptions: 'exceptions',
   telemetry: 'telemetry',
 } as const

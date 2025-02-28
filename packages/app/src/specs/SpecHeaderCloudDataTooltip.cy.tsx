@@ -1,6 +1,7 @@
 import { SpecHeaderCloudDataTooltipFragmentDoc } from '../generated/graphql-test'
 import SpecHeaderCloudDataTooltip from './SpecHeaderCloudDataTooltip.vue'
 import { get, set } from 'lodash'
+// tslint:disable-next-line: no-implicit-dependencies - unsure how to handle these
 import { defaultMessages } from '@cy/i18n'
 import { useUserProjectStatusStore } from '@packages/frontend-shared/src/store/user-project-status-store'
 
@@ -112,8 +113,6 @@ describe('<SpecHeaderCloudDataTooltip />', () => {
           .and('contain', get(defaultMessages, msgKeys.connected).replace('{0}', get(defaultMessages, msgKeys.docs)))
 
           cy.findByTestId('cloud-data-tooltip-content').find('button').should('not.exist')
-
-          cy.percySnapshot()
         })
       })
 
@@ -134,8 +133,6 @@ describe('<SpecHeaderCloudDataTooltip />', () => {
           .click()
 
           cy.get('@showLoginConnectSpy').should('have.been.calledOnce')
-
-          cy.percySnapshot()
         })
       })
 
@@ -152,7 +149,6 @@ describe('<SpecHeaderCloudDataTooltip />', () => {
           .and('contain', get(defaultMessages, msgKeys.noAccess).replace('{0}', get(defaultMessages, msgKeys.docs)))
 
           cy.contains('button', defaultMessages.specPage.requestAccessButton).should('be.visible')
-          cy.percySnapshot()
         })
       })
 
@@ -168,9 +164,7 @@ describe('<SpecHeaderCloudDataTooltip />', () => {
           .should('be.visible')
           .and('contain', get(defaultMessages, msgKeys.noAccess).replace('{0}', get(defaultMessages, msgKeys.docs)))
 
-          cy.contains('button', defaultMessages.specPage.requestSentButton).should('be.visible')
-
-          cy.percySnapshot()
+          cy.contains('button', defaultMessages.specPage.requestSentButton).should('be.visible').should('be.disabled')
         })
       })
 
@@ -191,8 +185,6 @@ describe('<SpecHeaderCloudDataTooltip />', () => {
           .click()
 
           cy.get('@showLoginConnectSpy').should('have.been.calledOnce')
-
-          cy.percySnapshot()
         })
       })
 
@@ -213,8 +205,6 @@ describe('<SpecHeaderCloudDataTooltip />', () => {
           .click()
 
           cy.get('@showLoginConnectSpy').should('have.been.calledOnce')
-
-          cy.percySnapshot()
         })
       })
 

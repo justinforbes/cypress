@@ -16,14 +16,14 @@ import type { DataContext } from '..'
 import assert from 'assert'
 import type { AllModeOptions, FoundBrowser, FullConfig, TestingType } from '@packages/types'
 import { autoBindDebug } from '../util/autoBindDebug'
-import { GitDataSource, LegacyCypressConfigJson } from '../sources'
+import { EventCollectorSource, GitDataSource, LegacyCypressConfigJson } from '../sources'
 import { OnFinalConfigLoadedOptions, ProjectConfigManager } from './ProjectConfigManager'
 import pDefer from 'p-defer'
 import { EventRegistrar } from './EventRegistrar'
 import { getServerPluginHandlers, resetPluginHandlers } from '../util/pluginHandlers'
 import { detectLanguage } from '@packages/scaffold-config'
 import { validateNeedToRestartOnChange } from '@packages/config'
-import { MAJOR_VERSION_FOR_CONTENT } from '@packages/types'
+import { GET_MAJOR_VERSION_FOR_CONTENT } from '@packages/types'
 import { telemetry } from '@packages/telemetry'
 
 export interface SetupFullConfigOptions {
@@ -238,15 +238,36 @@ export class ProjectLifecycleManager {
         if (this._currentTestingType === 'component') {
           const span = telemetry.startSpan({ name: 'dataContext:ct:startDevServer' })
 
+          /**
+           * We need to start the dev server in the ProjectLifecycleManager when:
+           *   1. GA component testing is running so we can compile the dev server will all specs matching the specPattern
+           *   2. justInTimeCompile is enabled (for webpack-dev-server). In this case, we start a dev server
+           *      with an empty specs list to initially compile the support file and related dependencies in order to hopefully
+           *      leverage the dev server cache for recompiling for when we actually have a spec to add to the dev server entry.
+           *      The empty specs are handled within the @cypress/webpack-dev-server package as this has no impact on vite.
+           */
           const devServerOptions = await this.ctx._apis.projectApi.getDevServer().start({ specs: this.ctx.project.specs, config: finalConfig })
 
-          span?.end()
+          // If we received a cypressConfig.port we want to null it out
+          // because we propagated it into the devServer.port and it is
+          // later set as baseUrl which cypress is launched into
+          //
+          // The special case is cypress in cypress testing. If that's the case, we still need
+          // the wrapper cypress to be running on 4455
+          if (!process.env.CYPRESS_INTERNAL_E2E_TESTING_SELF) {
+            finalConfig.port = null
+          } else {
+            finalConfig.port = 4455
+          }
 
           if (!devServerOptions?.port) {
+            span?.end()
             throw getError('CONFIG_FILE_DEV_SERVER_INVALID_RETURN', devServerOptions)
           }
 
           finalConfig.baseUrl = `http://localhost:${devServerOptions?.port}`
+
+          span?.end()
         }
 
         const pingBaseUrl = this._cachedFullConfig && this._cachedFullConfig.baseUrl !== finalConfig.baseUrl
@@ -287,16 +308,31 @@ export class ProjectLifecycleManager {
   /**
    * Sets the initial `activeBrowser` depending on these criteria, in order of preference:
    *  1. The value of `--browser` passed via CLI.
-   *  2. The last browser selected in `open` mode (by name and channel) for this project.
-   *  3. The first browser found.
+   *  2. The value of `defaultBrowser` in `cypress.config`.
+   *  3. The last browser selected in `open` mode (by name and channel) for this project.
+   *  4. The first browser found.
    */
   async setInitialActiveBrowser () {
+    const configDefaultBrowser = this.loadedFullConfig?.defaultBrowser
+
+    // if we have a default browser from the config and a CLI browser wasn't passed and the active browser hasn't been set
+    // set the cliBrowser to the defaultBrowser from the config since we want the defaultBrowser to behave as if it was passed via CLI
+    if (configDefaultBrowser && !this.ctx.modeOptions.isBrowserGivenByCli && !this.ctx.coreData.activeBrowser) {
+      this.ctx.actions.browser.setCliBrowser(configDefaultBrowser)
+    }
+
+    // if we already have an activeBrowser, that means we are reloading the browser (e.g. after a config change in open mode)
+    // so we need to set the CLI browser to the activeBrowser to ensure the GUI shows the correct browser
+    if (this.ctx.coreData.activeBrowser && !process.env.CYPRESS_INTERNAL_E2E_TESTING_SELF) {
+      this.ctx.actions.browser.setCliBrowser(`${this.ctx.coreData.activeBrowser.name}:${this.ctx.coreData.activeBrowser.channel}`)
+    }
+
     if (this.ctx.coreData.cliBrowser) {
       await this.setActiveBrowserByNameOrPath(this.ctx.coreData.cliBrowser)
 
       const preferences = await this.ctx._apis.localSettingsApi.getPreferences()
 
-      const hasWelcomeBeenDismissed = Boolean(preferences.majorVersionWelcomeDismissed?.[MAJOR_VERSION_FOR_CONTENT])
+      const hasWelcomeBeenDismissed = Boolean(preferences.majorVersionWelcomeDismissed?.[GET_MAJOR_VERSION_FOR_CONTENT()])
 
       // only continue if the browser was successfully set - we must have an activeBrowser once this function resolves
       // but if the user needs to dismiss a landing page, don't continue, the active browser will be opened
@@ -432,6 +468,11 @@ export class ProjectLifecycleManager {
           await this.ctx.relevantRuns.checkRelevantRuns(shas)
         },
       })
+
+      s.eventCollectorSource?.destroy()
+      if (this.ctx.isOpenMode) {
+        s.eventCollectorSource = new EventCollectorSource(this.ctx)
+      }
 
       s.diagnostics = { error: null, warnings: [] }
       s.packageManager = packageManagerUsed
@@ -574,6 +615,7 @@ export class ProjectLifecycleManager {
 
     await this.ctx.coreData.currentProjectGitInfo?.destroy()
     await this.ctx.project.destroy()
+    await this.ctx.coreData.eventCollectorSource?.destroy()
     this._currentTestingType = null
     this._cachedInitialConfig = undefined
     this._cachedFullConfig = undefined

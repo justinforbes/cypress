@@ -13,7 +13,7 @@ interface DetectFramework {
   bundler?: WizardBundler['type']
 }
 
-export async function areAllDepsSatisified (projectPath: string, framework: Cypress.ResolvedComponentFrameworkDefinition) {
+export async function areAllDepsSatisfied (projectPath: string, framework: Cypress.ResolvedComponentFrameworkDefinition) {
   for (const dep of framework.detectors) {
     const result = await isDependencyInstalled(dep, projectPath)
 
@@ -25,7 +25,7 @@ export async function areAllDepsSatisified (projectPath: string, framework: Cypr
   return true
 }
 
-// Detect the framework, which can either be a tool like Create React App,
+// Detect the framework, which can either be a tool like Next.js,
 // in which case we just return the framework. The user cannot change the
 // bundler.
 
@@ -35,10 +35,9 @@ export async function areAllDepsSatisified (projectPath: string, framework: Cypr
 export async function detectFramework (projectPath: string, frameworks: Cypress.ResolvedComponentFrameworkDefinition[]): Promise<DetectFramework> {
   // first see if it's a template
   for (const framework of frameworks.filter((x) => x.category === 'template')) {
-    const hasAllDeps = await areAllDepsSatisified(projectPath, framework)
+    const hasAllDeps = await areAllDepsSatisfied(projectPath, framework)
 
     // so far all the templates we support only have 1 bundler,
-    // for example CRA only works with webpack,
     // but we want to consider in the future, tools like Nuxt ship
     // both a webpack and vite dev-env.
     // if we support this, we will also need to attempt to infer the dev server of choice.
@@ -54,7 +53,7 @@ export async function detectFramework (projectPath: string, frameworks: Cypress.
   for (const library of frameworks.filter((x) => x.category === 'library')) {
     // multiple bundlers supported, eg React works with webpack and Vite.
     // try to infer which one they are using.
-    const hasLibrary = await areAllDepsSatisified(projectPath, library)
+    const hasLibrary = await areAllDepsSatisfied(projectPath, library)
 
     for (const bundler of WIZARD_BUNDLERS) {
       const detectBundler = await isDependencyInstalled(bundler, projectPath)

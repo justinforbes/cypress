@@ -1,5 +1,6 @@
 import { CloudRunStatus, DebugPageHeaderFragmentDoc } from '../generated/graphql-test'
 import DebugPageHeader from './DebugPageHeader.vue'
+// tslint:disable-next-line: no-implicit-dependencies - unsure how to handle these
 import { defaultMessages } from '@cy/i18n'
 
 const defaults = [
@@ -43,11 +44,11 @@ describe('<DebugPageHeader />', {
 
     cy.findByTestId('debug-results').should('be.visible')
 
-    cy.findByTestId('debug-runNumber-FAILED')
+    cy.findByTestId('runNumber-status-FAILED')
     .should('have.text', '#432')
     .children().should('have.length', 2)
 
-    cy.findByTestId('debug-flaky-badge')
+    cy.findByTestId('runResults-flakyBadge')
     .should('not.exist')
 
     defaults.forEach((obj) => {
@@ -73,7 +74,7 @@ describe('<DebugPageHeader />', {
       },
     })
 
-    cy.findByTestId('debug-flaky-badge')
+    cy.findByTestId('runResults-flakyBadge')
     .contains(defaultMessages.specPage.flaky.badgeLabel)
 
     cy.findByTestId('total-flaky-tests')
@@ -97,8 +98,7 @@ describe('<DebugPageHeader />', {
         },
       })
 
-      cy.findByTestId(`debug-runNumber-${status}`).should('be.visible')
-      cy.percySnapshot()
+      cy.findByTestId(`runNumber-status-${status}`).should('be.visible')
     })
   })
 

@@ -1,5 +1,6 @@
 import SpecsListHeader from './SpecsListHeader.vue'
 import { defineComponent, ref, h } from 'vue'
+// tslint:disable-next-line: no-implicit-dependencies - unsure how to handle these
 import { defaultMessages } from '@cy/i18n'
 
 const buttonSelector = '[data-cy=new-spec-button]'
@@ -79,8 +80,6 @@ describe('<SpecsListHeader />', { keystrokeDelay: 0 }, () => {
     .click()
     .get('@show-spec-pattern-modal')
     .should('have.been.called')
-
-    cy.percySnapshot()
   })
 
   it('shows the count correctly when not searching', () => {
@@ -96,17 +95,11 @@ describe('<SpecsListHeader />', { keystrokeDelay: 0 }, () => {
     .should('be.visible')
     .and('have.attr', 'aria-live', 'polite')
 
-    cy.percySnapshot('No matches')
-
     mountWithSpecCount(1)
     cy.contains('1 match').should('be.visible')
 
-    cy.percySnapshot('Singular Match')
-
     mountWithSpecCount(100)
     cy.contains('100 matches').should('be.visible')
-
-    cy.percySnapshot('Plural Match')
   })
 
   it('shows the count correctly while searching', () => {
@@ -124,7 +117,5 @@ describe('<SpecsListHeader />', { keystrokeDelay: 0 }, () => {
     cy.contains('0 of 1 match').should('be.visible')
     cy.contains('1 of 1 match').should('be.visible')
     cy.contains('5 of 22 matches').should('be.visible')
-
-    cy.percySnapshot()
   })
 })

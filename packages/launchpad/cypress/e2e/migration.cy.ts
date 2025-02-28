@@ -26,7 +26,6 @@ function scaffoldAndVisitLaunchpad (project: ProjectFixtureDir, argv?: string[])
   cy.scaffoldProject(project)
   cy.openProject(project, argv)
   cy.visitLaunchpad()
-  cy.skipWelcome()
 }
 
 function startMigrationFor (project: ProjectFixtureDir, argv?: string[]) {
@@ -90,8 +89,6 @@ describe('global mode', () => {
       o.sinon.stub(ctx.actions.migration, 'locallyInstalledCypressVersion').resolves((await ctx.versions.versionData()).current.version)
     })
 
-    cy.contains('button', cy.i18n.majorVersionWelcome.actionContinue).click()
-
     cy.contains('migration-e2e-export-default').click()
 
     // rename integration->e2e
@@ -132,7 +129,6 @@ describe('Opening unmigrated project', () => {
     cy.scaffoldProject('migration')
     cy.openProject('migration', ['--e2e'])
     cy.visitLaunchpad()
-    cy.skipWelcome()
     cy.get('h1').should('contain', 'Migrating')
   })
 
@@ -140,14 +136,13 @@ describe('Opening unmigrated project', () => {
     cy.scaffoldProject('migration-component-testing')
     cy.openProject('migration-component-testing', ['--component'])
     cy.visitLaunchpad()
-    cy.skipWelcome()
     cy.get('h1').should('contain', 'Migrating')
   })
 
   it('major version welcome page appears with correct links and can be dismissed', () => {
     cy.scaffoldProject('migration')
     cy.openProject('migration')
-    cy.visitLaunchpad()
+    cy.visitLaunchpad({ showWelcome: true })
 
     cy.contains(cy.i18n.majorVersionWelcome.title).should('be.visible')
 
@@ -637,55 +632,6 @@ describe('Full migration flow for each project', { retries: { openMode: 0, runMo
   })
 
   it('completes journey for migration-e2e-custom-test-files', () => {
-    startMigrationFor('migration-e2e-custom-test-files')
-    // default integration but custom testFiles
-    // can rename integration->e2e
-    cy.get(renameAutoStep).should('exist')
-    // no CT
-    cy.get(renameManualStep).should('not.exist')
-    // supportFile is false - cannot migrate
-    cy.get(renameSupportStep).should('exist')
-    cy.get(setupComponentStep).should('not.exist')
-    cy.get(configFileStep).should('exist')
-
-    cy.scaffoldProject('migration-e2e-custom-test-files')
-    cy.openProject('migration-e2e-custom-test-files')
-    cy.visitLaunchpad()
-
-    // default testFiles but custom integration - can rename automatically
-    cy.get(renameAutoStep).should('exist')
-    // no CT
-    cy.get(renameManualStep).should('not.exist')
-    // supportFile is false - cannot migrate
-    cy.get(renameSupportStep).should('exist')
-    cy.get(setupComponentStep).should('not.exist')
-    cy.get(configFileStep).should('exist')
-
-    // Migration workflow
-    // before auto migration
-    cy.contains('cypress/integration/basic.test.js')
-
-    // after auto migration
-    cy.contains('cypress/e2e/basic.test.js')
-
-    runAutoRename()
-
-    cy.withRetryableCtx(async (ctx) => {
-      const specs = ['cypress/e2e/basic.test.js']
-
-      for (const spec of specs) {
-        const stats = await ctx.file.checkIfFileExists(ctx.path.join(spec))
-
-        expect(stats).to.not.be.null
-      }
-    })
-
-    renameSupport()
-    migrateAndVerifyConfig()
-    checkOutcome()
-  })
-
-  it('completes journey for migration-e2e-custom-test-files', () => {
     const project = 'migration-e2e-custom-test-files-array'
 
     startMigrationFor(project)
@@ -1068,23 +1014,6 @@ describe('Full migration flow for each project', { retries: { openMode: 0, runMo
 
     runAutoRename()
 
-    migrateAndVerifyConfig()
-    checkOutcome()
-  })
-
-  // TODO: Do we need to consider this case?
-  it.skip('completes journey for migration-e2e-defaults-no-specs', () => {
-    startMigrationFor('migration-e2e-defaults-no-specs')
-    // no specs, nothing to rename?
-    cy.get(renameAutoStep).should('not.exist')
-    // no CT
-    cy.get(renameManualStep).should('not.exist')
-    // supportFile is false - cannot migrate
-    cy.get(renameSupportStep).should('exist')
-    cy.get(setupComponentStep).should('not.exist')
-    cy.get(configFileStep).should('exist')
-
-    renameSupport()
     migrateAndVerifyConfig()
     checkOutcome()
   })
